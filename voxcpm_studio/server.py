@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import inspect
 from pathlib import Path
 from typing import Optional
 
@@ -8,6 +9,12 @@ import gradio as gr
 
 from .config import DEFAULT_CONFIG, StudioConfig
 from .engine import VoxCPMEngine
+
+
+THEME = gr.themes.Soft(primary_hue="blue", neutral_hue="slate")
+CSS = """
+.compact textarea { font-size: 15px !important; }
+"""
 
 
 MODES = ["可控克隆", "极致克隆", "声音设计"]
@@ -60,16 +67,14 @@ def create_interface(engine: VoxCPMEngine) -> gr.Blocks:
         )
         return (result.sample_rate, result.waveform), "生成完成"
 
-    css = """
-    .compact textarea { font-size: 15px !important; }
-    footer { visibility: hidden; }
-    """
+    launch_params = inspect.signature(gr.Blocks.launch).parameters
+    block_kwargs = {"title": "VoxCPM Studio"}
+    if "theme" not in launch_params:
+        block_kwargs["theme"] = THEME
+    if "css" not in launch_params:
+        block_kwargs["css"] = CSS
 
-    with gr.Blocks(
-        title="VoxCPM Studio",
-        theme=gr.themes.Soft(primary_hue="blue", neutral_hue="slate"),
-        css=css,
-    ) as demo:
+    with gr.Blocks(**block_kwargs) as demo:
         gr.Markdown("# VoxCPM Studio")
 
         with gr.Row(equal_height=False):
@@ -167,13 +172,23 @@ def run_server(
     )
     engine = VoxCPMEngine(config)
     interface = create_interface(engine)
-    interface.queue(default_concurrency_limit=1).launch(
-        server_name=host,
-        server_port=port,
-        share=share,
-        show_api=True,
-        inbrowser=True,
-    )
+    launch_params = inspect.signature(interface.launch).parameters
+    launch_kwargs = {
+        "server_name": host,
+        "server_port": port,
+        "share": share,
+        "inbrowser": True,
+    }
+    if "show_api" in launch_params:
+        launch_kwargs["show_api"] = True
+    if "theme" in launch_params:
+        launch_kwargs["theme"] = THEME
+    if "css" in launch_params:
+        launch_kwargs["css"] = CSS
+    if "footer_links" in launch_params:
+        launch_kwargs["footer_links"] = ["api"]
+
+    interface.queue(default_concurrency_limit=1).launch(**launch_kwargs)
 
 
 def main() -> None:

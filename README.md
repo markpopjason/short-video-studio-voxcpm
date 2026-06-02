@@ -40,7 +40,7 @@ python -m voxcpm_studio synthesize --text "你好" --reference-audio ref.wav --o
 
 ## Gradio API
 
-启动服务后，接口名是 `/generate_voice`，页面右下角的 API 文档会显示可直接调用的 Python 和 curl 示例。
+启动服务后，接口名是 `/generate_voice`。页面底部的 API 文档入口会显示可直接调用的 Python 和 curl 示例。
 
 ## 运行要求
 

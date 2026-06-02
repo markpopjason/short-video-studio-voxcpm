@@ -57,23 +57,43 @@ if ([string]::IsNullOrWhiteSpace($TorchBackend)) {
     }
 }
 
+$TorchVersion = "2.5.1"
+$TorchBuildSuffix = $null
+$TorchIndexUrl = $null
 switch ($TorchBackend.ToLowerInvariant()) {
     "cpu" {
-        Invoke-Checked $UvExe @("pip", "install", "--python", $VenvPython, "torch>=2.5.0", "--index-url", "https://download.pytorch.org/whl/cpu")
+        $TorchBuildSuffix = "cpu"
+        $TorchIndexUrl = "https://download.pytorch.org/whl/cpu"
     }
     "cu121" {
-        Invoke-Checked $UvExe @("pip", "install", "--python", $VenvPython, "torch>=2.5.0", "--index-url", "https://download.pytorch.org/whl/cu121")
+        $TorchBuildSuffix = "cu121"
+        $TorchIndexUrl = "https://download.pytorch.org/whl/cu121"
     }
     "cu124" {
-        Invoke-Checked $UvExe @("pip", "install", "--python", $VenvPython, "torch>=2.5.0", "--index-url", "https://download.pytorch.org/whl/cu124")
+        $TorchBuildSuffix = "cu124"
+        $TorchIndexUrl = "https://download.pytorch.org/whl/cu124"
     }
     default {
         throw "Unsupported VOXCPM_TORCH_BACKEND=$TorchBackend. Use cpu, cu121, or cu124."
     }
 }
 
+function Install-PyTorchStack {
+    $TorchInstallArgs = @("pip", "install", "--python", $VenvPython, "--index-url", $TorchIndexUrl)
+    $TorchInstallArgs += "torch==$TorchVersion+$TorchBuildSuffix"
+    $TorchInstallArgs += "torchaudio==$TorchVersion+$TorchBuildSuffix"
+    Invoke-Checked $UvExe $TorchInstallArgs
+}
+
+Install-PyTorchStack
+
 Write-Step "Installing VoxCPM Studio dependencies"
 Invoke-Checked $UvExe @("pip", "install", "--python", $VenvPython, "-r", "requirements.txt")
+
+Write-Step "Verifying PyTorch audio stack"
+Install-PyTorchStack
+$TorchCheck = "import torch, torchaudio; tv=torch.__version__.split('+')[0]; av=torchaudio.__version__.split('+')[0]; raise SystemExit(0 if tv == av else f'torch/torchaudio version mismatch: {torch.__version__} vs {torchaudio.__version__}')"
+Invoke-Checked $VenvPython @("-c", $TorchCheck)
 
 Write-Step "Starting VoxCPM Studio"
 Invoke-Checked $VenvPython @("-m", "voxcpm_studio", "serve", "--host", "127.0.0.1", "--port", "8808", "--device", "auto")
