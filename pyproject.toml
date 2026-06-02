@@ -1,0 +1,22 @@
+[project]
+name = "short-video-studio-voxcpm"
+version = "0.1.0"
+description = "Local VoxCPM voice cloning studio with Gradio UI/API and ModelScope downloads."
+requires-python = ">=3.10,<3.13"
+dependencies = [
+  "gradio>=4.44",
+  "modelscope>=1.17",
+  "numpy>=1.24",
+  "soundfile>=0.12",
+  "voxcpm>=2.0.0",
+]
+
+[project.scripts]
+voxcpm-studio = "voxcpm_studio.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["voxcpm_studio*"]
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"

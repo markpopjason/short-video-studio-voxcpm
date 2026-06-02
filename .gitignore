@@ -1,0 +1,7 @@
+.venv/
+.runtime/
+__pycache__/
+*.pyc
+outputs/
+pretrained_models/
+.DS_Store
